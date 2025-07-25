@@ -1,25 +1,29 @@
 package io.jenkins.plugins.sample.util;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PluginHelper {
 
-    public static HttpResponse<String> postJson(String url, String jsonBody) throws IOException, InterruptedException {
-
-        HttpRequest postRequest = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json") // Set content type for JSON
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // Specify POST and provide the body
-                .build();
-        HttpClient client = HttpClient.newHttpClient();
-        return client.send(postRequest, HttpResponse.BodyHandlers.ofString());
-
+    public static int httpPostBasicAuth(String url, String username, String password) throws IOException, InterruptedException {
+        String credentials = username + ":" + password;
+        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+        String authHeaderValue = "Basic " + encodedCredentials;
+        URL targetUrl = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) targetUrl.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Authorization", authHeaderValue);
+        connection.setDoOutput(true);
+        return connection.getResponseCode();
     }
 
     public static boolean isInvalidField(String field, String regex){
