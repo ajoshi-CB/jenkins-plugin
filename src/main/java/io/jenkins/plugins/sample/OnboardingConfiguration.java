@@ -13,6 +13,10 @@ import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Extension
 public class OnboardingConfiguration extends GlobalConfiguration {
@@ -126,11 +130,14 @@ public class OnboardingConfiguration extends GlobalConfiguration {
             if (url.isEmpty() || username.isEmpty() || password.isEmpty()){
                 return FormValidation.error("Mandatory parameters cannot be null or empty");
             }
-            ObjectMapper  mapper = new ObjectMapper();
-            System.out.println("Connecting to: " + url);
-            return FormValidation.ok("Success");
-        } catch (Exception e) {
-            return FormValidation.error("Client error : ");
+            int statusCode = PluginHelper.httpPostBasicAuth(url, username, password);
+            if (statusCode != HttpURLConnection.HTTP_OK) {
+                return FormValidation.error("Sever error : "+statusCode);
+            } else {
+                return FormValidation.ok("Input Validated");
+            }
+        } catch (IOException | InterruptedException e) {
+            return FormValidation.error("Server Error Occured with status code 500 ");
         }
     }
 }
